@@ -1,100 +1,67 @@
 (*
                               CS51 Lab 7
-                   Modules and Abstract Data Types
+                          Modules & Functors
 
-Objective:
+                 A module for colors and color names
 
-This lab practices concepts of modules, including files as modules,
-signatures, and polymorphic abstract data types.
+The representation for colors in this implementation is really obscure
+and arguably unnecessarily so. By the way, it also has some bugs so it
+doesn't pass all the unit tests. No need to debug it though. You'll be
+replacing it wholesale with a simpler implementation. *)
 
-There are 4 total parts to this lab. Please refer to the following
-files to complete all exercises:
 
--> lab7_part1.ml -- Part 1: Implementing modules (this file)
-   lab7_part2.ml -- Part 2: Files as modules
-   lab7_part3.ml -- Part 3: Interfaces as abstraction barriers
-   lab7_part4.ml -- Part 4: Polymorphic abstract types
+(* 
+                               SOLUTION
 
- *)
+In this implementation, we simply use int triples for the rgb
+channels. By keeping the data in a more structured form, all of the
+conversions are simplified.
 
-(*======================================================================
-Part 1: Implementing Modules
+You might have used a record type instead of a tuple, for instance,
 
-Modules are a way to package together and encapsulate types and values
-(including functions) into a single discrete unit.
+    type color = { red : int; green : int; blue : int } ;;
 
-By applying a signature to a module, we guarantee that the module
-implements at least the values and functions defined within it. The
-module may also implement more as well, for internal use, but only
-those specified in the signature will be exposed and available outside
-the module definition.
-
-Below is a MATH signature; we'll use it to describe a limited subset of
-functions and values that a mathematics module might contain.
-......................................................................*)
-
-module type MATH =
-  sig
-    (* the constant pi *)
-    val pi : float                        
-    (* cosine of an angle *)
-    val cos : float -> float
-    (* sine of an angle *)
-    val sin : float -> float 
-    (* sum of two numbers *)
-    val sum : float -> float -> float
-    (* maximum value in a list; None if list is empty *)
-    val max : float list -> float option
-  end ;;
-
-  (*......................................................................
-Exercise 1A: Complete the implementation of a module called Math that
-satisfies the signature above. (The value "nan" stands for "not a
-number" and is an actual value of the float type, as dictated by the
-IEEE Floating Point standard described at 
-<https://en.wikipedia.org/wiki/IEEE_754>. We're using it here as a
-temporary value pending your putting in appropriate ones.)
-......................................................................*)
-
-(* Most of the pertinent math functions are already available in the
-Pervasives module. We can just use them here. And since functions are
-first-class values in OCaml, you don't need to replicate the argument
-structure in the definitions. For example, there's no need for 
-
-    let cos x = cos x     . 
-
-The only function not already available is max; we generated a simple
-implementation using a partially applied fold on non-empty lists. *)
+That could work too. And the user of the module (lab7_part2.ml)
+wouldn't be able to tell the difference, just like it can't tell the
+difference with the obfuscated implementation in the original
+color.ml. *)
     
-module Math : MATH =
-  struct
-    let pi = 3.14159
-    let cos = cos
-    let sin = sin
-    let sum = (+.)
-    let max lst =
-      match lst with
-      | [] -> None
-      | hd :: tl -> Some (List.fold_left max hd tl)
-  end ;;
+(* 8-bit RGB channel colors *)
+type color = int * int * int ;;
 
-(*......................................................................
-Exercise 1B: Now that you've implemented the Math module, use it to
-compute the maximum of the cosine of pi and the sine of pi, a value of
-type float option. Name the resulting value "result". (Do not use a
-local open for this exercise.)
-......................................................................*)
+(* Some standard color names *)
+type color_name =
+  | Red | Green | Blue
+  | Orange | Yellow | Indigo | Violet ;;
 
-let result = Math.max [Math.cos Math.pi; Math.sin Math.pi] ;;
+(* to_color r g b -- Returns the color corrersponding to the RGB
+   values given by r, g, and b *)
+let to_color (r : int) (g : int) (b : int) : color = 
+  r, g, b ;;
 
-(*......................................................................
-Exercise 1C: Reimplement the computation from 1B above, now as
-"result_local_open", but using a local open to write your computation
-in a more succinct manner.
-......................................................................*)
+(* red c -- Returns the red channel value for the color c *)
+let red (c : color) : int =
+  match c with 
+  | (r, _g, _b) -> r ;;
 
-let result_local_open =
-  let open Math in
-  max [cos pi; sin pi] ;;
+(* green c -- Returns the green channel value for the color c *)
+let green (c : color) : int = 
+  match c with 
+  | (_r, g, _b) -> g ;;
 
-(* Isn't the version with the local open more readable?! *)
+(* blue c -- Returns the blue channel value for the color c *)
+let blue (c : color) : int = 
+  match c with 
+  | (_r, _g, b) -> b ;;
+
+(* color_named name -- Returns the color (as RGB representation)
+   corresponding to the color name *)
+let color_named (name : color_name) : color = 
+  match name with 
+  | Red ->    to_color 255    0    0
+  | Green ->  to_color   0  255    0
+  | Blue ->   to_color   0    0  255
+  | Orange -> to_color 255  165    0
+  | Yellow -> to_color 255  255    0
+  | Indigo -> to_color  75    0  130
+  | Violet -> to_color 240  130  240 
